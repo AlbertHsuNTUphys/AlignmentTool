@@ -12,19 +12,19 @@ process.load("TrackPropagation.SteppingHelixPropagator.SteppingHelixPropagatorAl
 ## See https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideFrontierConditions
 from Configuration.AlCa.GlobalTag import GlobalTag
 #process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run3_data', '')
-process.GlobalTag = GlobalTag(process.GlobalTag, '130X_dataRun3_Express_v2', '')
+process.GlobalTag = GlobalTag(process.GlobalTag, '140X_dataRun3_Prompt_v2', '')
 
 ## Conditions for ES and TRK. Comment out for tutorial purpose
-#process.GlobalTag.toGet = cms.VPSet(
-#        cms.PSet(record = cms.string("ESAlignmentRcd"),
-#                 tag = cms.string("ES"),
-#                 connect = cms.string('sqlite_file:ESAlignments_Run3_2022B_iter11.db')
-#        ),
-#        cms.PSet(record = cms.string("TrackerAlignmentRcd"),
-#                 tag = cms.string("TrackerAlignment_collisions23_v0"),
-#                 connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
-#        )
-#)
+process.GlobalTag.toGet = cms.VPSet(
+        cms.PSet(record = cms.string("ESAlignmentRcd"),
+                 tag = cms.string("ES"),
+                 connect = cms.string('sqlite_file:ESAlignments_Run3_2022B_iter11.db')
+        ),
+        cms.PSet(record = cms.string("TrackerAlignmentRcd"),
+                 tag = cms.string("TrackerAlignment_PCL_byRun_v2_express"),
+                 connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
+        )
+)
 
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.MessageLogger.cerr.FwkReport.reportEvery = cms.untracked.int32( 1000 )

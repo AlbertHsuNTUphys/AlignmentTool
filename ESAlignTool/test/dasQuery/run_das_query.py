@@ -19,8 +19,10 @@ def search_files():
     datasets = [
         #"/EGamma0/Run2023A-EcalESAlign-PromptReco-v2/ALCARECO",
         #"/EGamma0/Run2023B-EcalESAlign-PromptReco-v1/ALCARECO",
-        "/EGamma1/Run2023A-EcalESAlign-PromptReco-v2/ALCARECO",
-        "/EGamma1/Run2023B-EcalESAlign-PromptReco-v1/ALCARECO",
+        #"/EGamma1/Run2023A-EcalESAlign-PromptReco-v2/ALCARECO",
+        #"/EGamma1/Run2023B-EcalESAlign-PromptReco-v1/ALCARECO",
+        "/EGamma1/Run2024B-EcalESAlign-PromptReco-v1/ALCARECO",
+        "/EGamma1/Run2024C-EcalESAlign-PromptReco-v1/ALCARECO"
     ]
 
     for i, dataset in enumerate(datasets):
@@ -52,7 +54,7 @@ def sort_root_files():
 def check_lumi():
     print ">>> start checking lumi through DAS..."
 
-    txtFile = "lumi_2023.txt"
+    txtFile = "lumi_2024.txt"
     exe('echo "# init lumi" > %s' % txtFile)
 
     fin = open("list_sorted_runs.txt", 'r')
