@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 import os, glob, time
 import subprocess
 import argparse
@@ -9,12 +9,17 @@ args = parser.parse_args()
 
 directory = args.o
 path = os.getcwd().split("/test/condor")[0]
+store_path = '/eos/user/t/tihsu/esalignment'
 
-NumberExpectedOutputFiles = 10 # use part of 2022 data for tutorial purpose
+NumberExpectedOutputFiles = 646 # use part of 2022 data for tutorial purpose
 
 #----------------------------------------------------------------------------------------------------
 
 def init():
+    subprocess.call("mkdir -p %s/out" % os.path.join(store_path,'test/condor', directory), shell=True)
+    subprocess.call("mkdir -p %s/err" % os.path.join(store_path,'test/condor', directory), shell=True)
+    subprocess.call("mkdir -p %s/log" % os.path.join(store_path,'test/condor', directory), shell=True)
+    subprocess.call("mkdir -p %s/tmp" % os.path.join(store_path,'test/condor', directory), shell=True)
     subprocess.call("mkdir -p %s/out" % directory, shell=True)
     subprocess.call("mkdir -p %s/err" % directory, shell=True)
     subprocess.call("mkdir -p %s/log" % directory, shell=True)
@@ -24,19 +29,23 @@ def exe(command):
     if args.e:
         subprocess.call(command, shell=True)
     else:
-        print ">>>", command
+        print(">>>", command)
         #print command
 
 def rename_directory(sub_dir, iteration):
+    original = store_path + "/test/condor/" + directory + "/" + sub_dir
+    modified = store_path + "/test/condor/" + directory + "/" + sub_dir + "_iteration_%d" % (iteration)
+    command = "mv %s %s" % (original, modified)
+    exe(command)
     original = path + "/test/condor/" + directory + "/" + sub_dir
     modified = path + "/test/condor/" + directory + "/" + sub_dir + "_iteration_%d" % (iteration)
     command = "mv %s %s" % (original, modified)
     exe(command)
 
 def job_monitor():
-    print "\n--------------------------------------- start job monitoring ---------------------------------------"
-    time.sleep(1800) # 30 min
-    duration = 1800.
+    print("\n--------------------------------------- start job monitoring ---------------------------------------")
+    time.sleep(1200) # 20 min
+    duration = 1200.
 
     # monitor condor jobs
     wait_time = 120.
@@ -48,7 +57,7 @@ def job_monitor():
         # check how many jobs are running
         fin = open("tmp.txt", 'r')
         for line in fin.readlines():
-            if 'ykao' in line and 'ID' in line:
+            if 'tihsu' in line and 'ID' in line:
                 counter += 1
                 ndone = line.split()[5]
                 nrun  = line.split()[6]
@@ -56,10 +65,10 @@ def job_monitor():
         fin.close()
 
         if counter == 0:
-            print "All jobs are finished!"
+            print("All jobs are finished!")
             break
         else:
-            print "Remaining jobs (DONE/RUN/IDLE):", ndone, nrun, nidle, ", time = %.1f min, wait for %.0f seconds..." % (duration/60., wait_time)
+            print("Remaining jobs (DONE/RUN/IDLE):", ndone, nrun, nidle, ", time = %.1f min, wait for %.0f seconds..." % (duration/60., wait_time))
             duration += wait_time 
             time.sleep(wait_time)
 
@@ -67,28 +76,33 @@ def job_monitor():
     wait_time = 60.
     transferring = True
     while transferring:
-        outputfiles = glob.glob(condor_produced_files)
+        outputfiles = glob.glob("%s/test/condor/%s" % (store_path, condor_produced_files))
         if len(outputfiles)==NumberExpectedOutputFiles:
-            print "All output files transferred!", outputfiles
+            print("All output files transferred!", outputfiles)
             break
         else:
-            print "Output files coming back.", ", time = %.1f min, wait for %.0f senconds..." % (duration/60., wait_time)
+            print("Output files coming back.", ", time = %.1f min, wait for %.0f senconds..." % (duration/60., wait_time))
             duration += wait_time 
             time.sleep(wait_time)
 
-    print "-------------------------------------- end of job monitoring ---------------------------------------\n"
+    print("-------------------------------------- end of job monitoring ---------------------------------------\n")
 
 def run(iteration):
     # recreate a sub file
     import toolbox.metaData as m
     with open("./submit/exe.sub", 'w') as fsub:
-        fsub.write(m.content.format(PATH=path, ITERN=iteration, DIR=directory))
-
-    print "\n---------------------------------------- ./submit/exe.sub ------------------------------------------"
+        fsub.write(m.content.format(PATH=path, ITERN=iteration, DIR=directory, STOREPATH=store_path))
+        for i in range(NumberExpectedOutputFiles):
+          idx_str = str(i+1)
+          if len(idx_str) == 1:
+            idx_str = '0' + idx_str
+          fsub.write('AlignIter_cfg.py $(iteration) batch{idx_str} AlignmentFile_iter$(iteration)_output{idx_str}.root $(storePath)/condor/{DIR} \n'.format(idx_str = idx_str, DIR=directory))
+        fsub.write(')')
+    print("\n---------------------------------------- ./submit/exe.sub ------------------------------------------")
     with open("./submit/exe.sub", 'r') as fin:
         for line in fin.readlines():
-            print line.strip()
-    print "----------------------------------------------------------------------------------------------------\n"
+            print(line.strip())
+    print("----------------------------------------------------------------------------------------------------\n")
 
     # submit jobs
     command = "time condor_submit ./submit/exe.sub"
@@ -99,12 +113,12 @@ def run(iteration):
         job_monitor()
 
     # hadd
-    rootfile = path + "/test/condor/" + output_file
-    command = "hadd -f %s %s" % (rootfile, condor_produced_files)
+    rootfile = store_path + "/test/condor/" + output_file
+    command = "hadd -f %s %s/test/condor/%s" % (rootfile, store_path, condor_produced_files)
     exe(command)
 
-    tmp = path + "/test/condor/" + directory + "/tmp"
-    command = "mv %s %s" % (condor_produced_files, tmp)
+    tmp = store_path + "/test/condor/" + directory + "/tmp"
+    command = "mv %s/test/condor/%s %s" % (store_path, condor_produced_files, tmp)
     exe(command)
 
     # prevent >1,000 files in single directories
@@ -134,9 +148,9 @@ def run(iteration):
 
 
 def print_command(iteration):
-    rootfile = path + "/test/condor/" + output_file
+    rootfile = store_path + "/test/condor/" + output_file
     command = "root -l -b -q 'DrawResidual.C(%d, \"%s\")'" % (iteration, rootfile)
-    print command
+    print(command)
 
 #----------------------------------------------------------------------------------------------------
 
@@ -144,13 +158,13 @@ if __name__ == "__main__":
 
     init()
 
-    scope = range(2,12)
-    scope = range(1,2)
+    scope = range(1,12)
+#    scope = range(1,2)
 
     for iteration in scope:
-        print "\n================================================== intration:", iteration, "=================================================="
+        print("\n================================================== intration:", iteration, "==================================================")
         output_file = "%s/AlignmentFile_iter%d.root" % (directory, iteration)
         condor_produced_files = "%s/AlignmentFile_iter%d_output*.root" % (directory, iteration)
         run(iteration)
 
-    print ">>> finished!"
+    print(">>> finished!")
