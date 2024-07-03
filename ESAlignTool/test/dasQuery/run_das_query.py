@@ -13,26 +13,26 @@ def exe(command):
     subprocess.call(command, shell=True)
 
 def search_files():
-    print ">>> start searching files through DAS..."
+    print(">>> start searching files through DAS...")
 
     # 2023 CMS DAS: https://cmsweb.cern.ch/das/request?view=list&limit=50&instance=prod%2Fglobal&input=dataset%3D%2FEGamma*%2FRun2023*EcalESAlign*%2FALCARECO
     datasets = [
         #"/EGamma0/Run2023A-EcalESAlign-PromptReco-v2/ALCARECO",
         #"/EGamma0/Run2023B-EcalESAlign-PromptReco-v1/ALCARECO",
         #"/EGamma1/Run2023A-EcalESAlign-PromptReco-v2/ALCARECO",
-        #"/EGamma1/Run2023B-EcalESAlign-PromptReco-v1/ALCARECO",
-        "/EGamma1/Run2024B-EcalESAlign-PromptReco-v1/ALCARECO",
-        "/EGamma1/Run2024C-EcalESAlign-PromptReco-v1/ALCARECO"
+        "/EGamma1/Run2023B-EcalESAlign-PromptReco-v1/ALCARECO",
+        #"/EGamma1/Run2024B-EcalESAlign-PromptReco-v1/ALCARECO",
+        #"/EGamma1/Run2024C-EcalESAlign-PromptReco-v1/ALCARECO"
     ]
 
     for i, dataset in enumerate(datasets):
         txtFile = 'new_files_0%d.txt' % i
         command = 'dasgoclient --query="file dataset=%s" > %s' % (dataset, txtFile)
         exe(command)
-        print ">>> %s is created" % txtFile
+        print(">>> %s is created" % txtFile)
 
 def sort_root_files():
-    print ">>> start sorting files..."
+    print(">>> start sorting files...")
     
     # load list of files
     contents = []
@@ -49,10 +49,10 @@ def sort_root_files():
         for line in contents:
             line.strip()
             fout.write(line)
-    print ">>> %s is created" % output
+    print(">>> %s is created" % output)
 
 def check_lumi():
-    print ">>> start checking lumi through DAS..."
+    print(">>> start checking lumi through DAS...")
 
     txtFile = "lumi_2024.txt"
     exe('echo "# init lumi" > %s' % txtFile)
@@ -63,7 +63,7 @@ def check_lumi():
     for f in rootfiles:
         command = 'dasgoclient --query="lumi file=%s" >> %s' % (f, txtFile)
         exe(command)
-    print ">>> %s is created" % txtFile
+    print(">>> %s is created" % txtFile)
 
 #--------------------------------------------------
 
@@ -77,4 +77,4 @@ if __name__ == "__main__":
     if args.lumi:
         check_lumi()
 
-    print ">>> finished!"
+    print(">>> finished!")
